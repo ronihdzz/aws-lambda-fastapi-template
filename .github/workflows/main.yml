@@ -49,3 +49,42 @@ jobs:
           name: api
           path: api.zip
 
+  CD:
+    runs-on: ubuntu-latest
+    needs: [ CI ]
+    steps:
+      - name: Configurar credenciales de AWS
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+
+      - name: Descargar el artefacto de Lambda
+        uses: actions/download-artifact@v4
+        with:
+          name: api
+          path: .
+
+      - name: Verificar que el archivo existe
+        run: ls -lah api.zip
+
+      - name: Subir a S3
+        run: aws s3 cp api.zip s3://${{ secrets.AWS_S3_BUCKET }}/api.zip
+
+      - name: Actualizar el código de la función Lambda
+        run: aws lambda update-function-code --function-name ${{ secrets.AWS_LAMBDA_FUNCTION_NAME }} --s3-bucket ${{ secrets.AWS_S3_BUCKET }} --s3-key api.zip
+
+      - name: Esperar a que termine la actualización de Lambda
+        run: |
+          while true; do
+            STATUS=$(aws lambda get-function-configuration --function-name ${{ secrets.AWS_LAMBDA_FUNCTION_NAME }} --query "LastUpdateStatus" --output text)
+            echo "Estado actual de Lambda: $STATUS"
+            if [[ "$STATUS" == "Successful" ]]; then
+              break
+            fi
+            sleep 5
+          done
+
+      - name: Publicar nueva versión de la Lambda
+        run: aws lambda publish-version --function-name ${{ secrets.AWS_LAMBDA_FUNCTION_NAME }}
