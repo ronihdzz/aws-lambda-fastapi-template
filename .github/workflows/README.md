@@ -1,10 +1,30 @@
 # FastAPI CI/CD Pipeline
 
-## Resumen
+Este documento describe el flujo de trabajo para la integración y entrega continua (CI/CD) de una API desarrollada con FastAPI. El pipeline se ejecuta automáticamente al realizar un push a la rama `main` y se encarga de validar, empaquetar y desplegar la aplicación en AWS Lambda.
 
-Este flujo de trabajo de GitHub Actions automatiza el proceso de integración y entrega continua (CI/CD) para una API desarrollada con FastAPI. El pipeline incluye la instalación de dependencias, ejecución de pruebas, empaquetado del código y almacenamiento del artefacto resultante para su posterior despliegue.
+## Descripción General
 
-### Diagrama del Proceso
+El pipeline se divide en dos grandes etapas:
+
+1. **CI (Integración Continua):**
+   - **Checkout del Código:** Se clona el repositorio para obtener la versión actualizada.
+   - **Configuración del Entorno de Python:** Se instala Python 3.12 en el runner.
+   - **Cache de Dependencias:** Se almacenan las dependencias de pip para acelerar ejecuciones futuras.
+   - **Instalación de Dependencias:** Se crea un entorno virtual y se instalan las librerías necesarias según el archivo `requirements.txt`.
+   - **Ejecución de Pruebas:** Se ejecutan los tests unitarios usando `pytest` para garantizar la integridad del código.
+   - **Empaquetado de la API:** Se comprimen los archivos necesarios (incluyendo los paquetes instalados) en un archivo `api.zip`.
+   - **Subida del Artefacto:** Se almacena el archivo comprimido en GitHub Actions para que esté disponible en el proceso de despliegue.
+
+2. **CD (Entrega Continua):**
+   - **Configuración de Credenciales AWS:** Se configuran las credenciales para interactuar con AWS.
+   - **Descarga del Artefacto:** Se recupera el archivo `api.zip` generado en el proceso de CI.
+   - **Verificación del Archivo:** Se comprueba que el archivo `api.zip` existe.
+   - **Subida a S3:** Se sube el artefacto a un bucket en S3.
+   - **Actualización de la Función Lambda:** Se actualiza el código de la función Lambda usando el archivo subido.
+   - **Espera Activa:** Se realiza un bucle de espera hasta que el estado de la actualización de Lambda sea "Successful".
+   - **Publicación de Nueva Versión:** Se publica una nueva versión de la función Lambda.
+
+## Diagrama del Proceso
 
 ```mermaid
 graph TD;
@@ -15,96 +35,10 @@ graph TD;
     E --> F[Ejecución de pruebas con pytest];
     F --> G[Empaquetado de la API];
     G --> H[Subida del artefacto generado];
-```
-
-## Objetivo del Pipeline
-
-Este pipeline tiene como objetivo principal asegurar que el código de la API en FastAPI sea probado y empaquetado correctamente antes de ser desplegado en producción. La automatización de estos pasos garantiza que cada cambio en la rama `main` sea validado antes de su implementación.
-
-## Configuración del Workflow
-
-El workflow está definido en el archivo `.github/workflows/fastapi-cicd.yml` y se ejecuta automáticamente cuando se realiza un `push` a la rama `main`.
-
-### Jobs y Pasos
-
-#### 1. **Checkout del Código**
-   - Se clona el repositorio para obtener la versión más reciente del código.FastAPI
-
-```yaml
-- uses: actions/checkout@v3
-```
-
-#### 2. **Configuración del Entorno de Python**
-   - Se instala Python 3.12 en el runner de GitHub Actions.
-
-```yaml
-- name: Set up Python
-  uses: actions/setup-python@v4
-  with:
-    python-version: '3.12'
-```
-
-#### 3. **Cache de Dependencias**
-   - Se cachean las dependencias de pip para acelerar las futuras ejecuciones del workflow.
-
-```yaml
-- uses: actions/cache@v3
-  with:
-    path: ~/.cache/pip
-    key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
-    restore-keys: |
-      ${{ runner.os }}-pip-
-```
-
-#### 4. **Instalación de Dependencias**
-   - Se actualiza `pip` y se instalan las dependencias listadas en `requirements.txt` dentro de un entorno virtual.
-
-```yaml
-- name: Install dependencies
-  run: |
-    python -m pip install --upgrade pip
-    python -m venv venv
-    source venv/bin/activate
-    pip install -r requirements.txt
-```
-
-#### 5. **Ejecución de Pruebas**
-   - Se ejecutan las pruebas unitarias utilizando `pytest`.
-
-```yaml
-- name: Run Tests
-  run: |
-    source venv/bin/activate
-    pytest
-```
-
-#### 6. **Empaquetado de la API**
-   - Se comprimen los archivos necesarios en un `zip` para su posterior despliegue.
-
-```yaml
-- name: Package API
-  run: |
-    cd ./venv/lib/python3.12/site-packages
-    zip -r9 ../../../../api.zip .
-    cd ../../../../api
-    zip -g ../api.zip -r .
-```
-
-#### 7. **Subida del Artefacto**
-   - Se almacena el archivo `api.zip` como un artefacto en GitHub Actions.
-
-```yaml
-- name: Upload artifact
-  uses: actions/upload-artifact@v4
-  with:
-    name: api
-    path: api.zip
-```
-
-## Beneficios del Pipeline
-
-- **Automatización:** Reducción del trabajo manual en el despliegue de la API.
-- **Estandarización:** Todos los cambios en `main` siguen el mismo proceso de validación.
-- **Seguridad:** Se ejecutan pruebas antes de empaquetar la API.
-- **Rapidez:** Uso de caché para acelerar la instalación de dependencias.
-
+    H --> I[Configuración de credenciales AWS];
+    I --> J[Descarga del artefacto];
+    J --> K[Verificación del archivo zip];
+    K --> L[Subida a S3];
+    L --> M[Actualización de Lambda];
+    M --> N[Espera de actualización];
+    N --> O[Publicación de nueva versión de Lambda];
