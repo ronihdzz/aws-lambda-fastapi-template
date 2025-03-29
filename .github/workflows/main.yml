@@ -34,13 +34,14 @@ jobs:
       - name: Run Tests
         run: |
           source venv/bin/activate
-          pytest tests
-      
+          export PYTHONPATH=$PYTHONPATH:$(pwd)/src
+          echo "PYTHONPATH=$PYTHONPATH"
+          pytest src/tests
       - name: Package API
         run: |
           cd ./venv/lib/python3.12/site-packages
           zip -r9 ../../../../api.zip .
-          cd ../../../../api
+          cd ../../../../src
           zip -g ../api.zip -r .
       
       - name: Upload artifact
