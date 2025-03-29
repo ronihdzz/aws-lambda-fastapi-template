@@ -3,6 +3,7 @@ from mangum import Mangum
 from fastapi.openapi.utils import get_openapi
 import os
 from api.routers import api_v1_router
+from api.endpoints import index_router
 
 app = FastAPI(root_path=os.getenv("ROOT_PATH",""))
 
@@ -22,5 +23,6 @@ def custom_openapi():
 
 app.openapi = custom_openapi
 app.include_router(api_v1_router)
+app.include_router(index_router)
 
 handler = Mangum(app)
