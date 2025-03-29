@@ -1,10 +1,11 @@
 import unittest
 from fastapi.testclient import TestClient
-from api.main import app, books_db, counter_id
+from main import app
+from api.v1.endpoints import books_db, counter_id
 
 class TestBooksAPI(unittest.TestCase):
     def setUp(self):
-        # Reiniciamos el estado global antes de cada test
+        # Reset global state before each test
         global books_db, counter_id
         books_db.clear()
         counter_id = 0
@@ -31,12 +32,12 @@ class TestBooksAPI(unittest.TestCase):
         self.assertEqual(data["year"], payload["year"])
     
     def test_get_book(self):
-        # Crear un libro primero
+        # First create a book
         payload = {"title": "Test Book", "author": "Author A", "year": 2020}
         create_response = self.client.post("/books", json=payload)
         book_id = create_response.json()["id"]
         
-        # Recuperar el libro creado
+        # Retrieve the created book
         response = self.client.get(f"/books/{book_id}")
         self.assertEqual(response.status_code, 200)
         data = response.json()
@@ -44,12 +45,12 @@ class TestBooksAPI(unittest.TestCase):
         self.assertEqual(data["title"], payload["title"])
     
     def test_update_book(self):
-        # Crear un libro
+        # Create a book
         payload = {"title": "Old Title", "author": "Author A", "year": 2020}
         create_response = self.client.post("/books", json=payload)
         book_id = create_response.json()["id"]
         
-        # Actualizar el libro
+        # Update the book
         updated_payload = {"title": "New Title", "author": "Author B", "year": 2021}
         response = self.client.put(f"/books/{book_id}", json=updated_payload)
         self.assertEqual(response.status_code, 200)
@@ -60,16 +61,16 @@ class TestBooksAPI(unittest.TestCase):
         self.assertEqual(data["year"], updated_payload["year"])
     
     def test_delete_book(self):
-        # Crear un libro para posteriormente eliminarlo
+        # Create a book to delete later
         payload = {"title": "Delete Me", "author": "Author A", "year": 2020}
         create_response = self.client.post("/books", json=payload)
         book_id = create_response.json()["id"]
         
-        # Eliminar el libro
+        # Delete the book
         response = self.client.delete(f"/books/{book_id}")
         self.assertEqual(response.status_code, 204)
         
-        # Verificar que el libro ya no existe
+        # Verify the book no longer exists
         get_response = self.client.get(f"/books/{book_id}")
         self.assertEqual(get_response.status_code, 404)
         self.assertEqual(get_response.json()["detail"], "Book not found")
@@ -94,8 +95,7 @@ class TestBooksAPI(unittest.TestCase):
         response = self.client.get("/openapi.json")
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        # Verifica que la versión del openapi sea la forzada
+        # Verify that the openapi version is the forced one
         self.assertEqual(data["openapi"], "3.0.3")
         self.assertEqual(data["info"]["title"], "Books API")
         self.assertEqual(data["info"]["version"], "1.0.0")
-
