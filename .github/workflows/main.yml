@@ -31,12 +31,18 @@ jobs:
           source venv/bin/activate
           pip install -r requirements.txt
       
+      - name: Run pre-commit hooks
+        run: |
+          source venv/bin/activate
+          pre-commit run --all-files
+      
       - name: Run Tests
         run: |
           source venv/bin/activate
           export PYTHONPATH=$PYTHONPATH:$(pwd)/src
           echo "PYTHONPATH=$PYTHONPATH"
           pytest src/tests
+      
       - name: Package API
         run: |
           cd ./venv/lib/python3.12/site-packages
