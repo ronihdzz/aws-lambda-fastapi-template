@@ -1,6 +1,5 @@
 from fastapi import HTTPException
 from api.v1.schema import Book, BookCreate
-from typing import List
 from loguru import logger
 
 from fastapi import (
@@ -11,18 +10,18 @@ router = APIRouter(prefix="/books",tags=["Books"])
 
 
 # Simulated database
-books_db: List[Book] = []
+books_db: list[Book] = []
 counter_id = 0
 
 
 # Get all books
-@router.get("", response_model=List[Book])
-async def get_books():
+@router.get("", response_model=list[Book])
+async def get_books() -> list[Book]:
     logger.info("Retrieving all books")
     return books_db
 
 @router.post("", response_model=Book, status_code=201)
-async def create_book(book: BookCreate):
+async def create_book(book: BookCreate) -> Book:
     global counter_id
     counter_id += 1
     new_book = Book(id=counter_id, **book.model_dump())
@@ -32,7 +31,7 @@ async def create_book(book: BookCreate):
 
 # Get book by ID
 @router.get("/{book_id}", response_model=Book)
-async def get_book(book_id: int):
+async def get_book(book_id: int) -> Book:
     logger.info(f"Retrieving book with ID: {book_id}")
     for book in books_db:
         if book.id == book_id:
@@ -42,7 +41,7 @@ async def get_book(book_id: int):
 
 # Update a book
 @router.put("/{book_id}", response_model=Book)
-async def update_book(book_id: int, updated: BookCreate):
+async def update_book(book_id: int, updated: BookCreate) -> Book:
     logger.info(f"Attempting to update book with ID: {book_id}")
     for i, book in enumerate(books_db):
         if book.id == book_id:
@@ -55,7 +54,7 @@ async def update_book(book_id: int, updated: BookCreate):
 
 # Delete a book
 @router.delete("/{book_id}", status_code=204)
-async def delete_book(book_id: int):
+async def delete_book(book_id: int) -> None:
     logger.info(f"Attempting to delete book with ID: {book_id}")
     for i, book in enumerate(books_db):
         if book.id == book_id:

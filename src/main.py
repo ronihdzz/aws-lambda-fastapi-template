@@ -4,11 +4,12 @@ from fastapi.openapi.utils import get_openapi
 import os
 from api.routers import api_v1_router
 from api.endpoints import index_router
+from typing import Any
 
 app = FastAPI(root_path=os.getenv("ROOT_PATH",""))
 
 
-def custom_openapi():
+def custom_openapi() -> dict[str, Any]:
     if app.openapi_schema:
         return app.openapi_schema
     openapi_schema = get_openapi(
@@ -17,11 +18,11 @@ def custom_openapi():
         description="A sample API for books",
         routes=app.routes,
     )
-    openapi_schema["openapi"] = "3.0.3"  # 👈 force compatible version
+    openapi_schema["openapi"] = "3.0.3"
     app.openapi_schema = openapi_schema
     return app.openapi_schema
 
-app.openapi = custom_openapi
+app.openapi = custom_openapi # type: ignore
 app.include_router(api_v1_router)
 app.include_router(index_router)
 
