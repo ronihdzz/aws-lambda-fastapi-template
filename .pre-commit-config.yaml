@@ -3,7 +3,6 @@ repos:
     rev: v1.8.0
     hooks:
       - id: mypy
-        args: ["src","--config-file=mypy.ini"]
+        args: ["--config-file=mypy.ini"]
         language: system
-        pass_filenames: false
-        exclude: ^(src/shared/path.py|src/shared/environment.py)$
+        pass_filenames: true 

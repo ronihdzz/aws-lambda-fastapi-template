@@ -2,6 +2,10 @@
 
 FROM python:3.13-slim
 
+# Establecer variables de entorno
+
+ENV ENVIRONMENT=testing
+
 # Establecer directorio de trabajo
 WORKDIR /app
 
