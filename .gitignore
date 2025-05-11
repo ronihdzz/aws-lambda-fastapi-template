@@ -177,4 +177,4 @@ cython_debug/
 
 # Not ignored files
 !.envs/.env.testing.docker
-!.envs/.env.testing.local
+!.envs/.env.test

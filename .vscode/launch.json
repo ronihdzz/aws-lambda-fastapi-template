@@ -17,7 +17,6 @@
             "jinja": true,
             "cwd": "${workspaceFolder}/src",
             "env": {
-                "ENVIRONMENT": "development"
             },
             "python": "${workspaceFolder}/env/bin/python"
         }

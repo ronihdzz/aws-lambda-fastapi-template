@@ -6,3 +6,4 @@ repos:
         args: ["src","--config-file=mypy.ini"]
         language: system
         pass_filenames: false
+        exclude: ^(src/shared/path.py|src/shared/environment.py)$
