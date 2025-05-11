@@ -23,6 +23,7 @@ class SettingsManager:
         AppEnvironment.STAGING.value: StagingSettings,
         AppEnvironment.PRODUCTION.value: ProductionSettings,
         AppEnvironment.TESTING.value: TestingSettings,
+        AppEnvironment.TESTING_DOCKER.value: TestingSettings,
     }
 
     def __init__(self, environment: str):
