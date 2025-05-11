@@ -1,3 +1,4 @@
+from core.settings import settings
 from fastapi import FastAPI
 from mangum import Mangum
 from fastapi.openapi.utils import get_openapi
