@@ -7,7 +7,7 @@ from sqlalchemy.pool import NullPool
 from core.settings import settings
 
 
-application_name = settings.APP_NAME.replace(" ", "-").lower()
+application_name = settings.PROJECT.NAME.replace(" ", "-").lower()
 engine = create_engine(
     settings.POSTGRESQL_URL.unicode_string(), connect_args={"application_name": application_name}, poolclass=NullPool
 )
