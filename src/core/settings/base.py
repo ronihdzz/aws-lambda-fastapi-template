@@ -35,6 +35,8 @@ class Settings(BaseSettings):
 
     SENTRY_DSN: str | None = None
 
+    TIME_ZONE: str = "America/Mexico_City"
+
     # Project metadata
     # ----------------------------------------------------------------
 
