@@ -77,7 +77,7 @@ class SettingsManager:
             settings_class: type[Settings] = self.SETTINGS_CLASS_DICT[self.environment]
         except KeyError as exc:
             raise ValueError(f"Unrecognized environment value: {self.environment}") from exc
-        return settings_class()
+        return settings_class() # type: ignore
 
 
 settings: Settings = SettingsManager(environment=APP_ENVIRONMENT).settings

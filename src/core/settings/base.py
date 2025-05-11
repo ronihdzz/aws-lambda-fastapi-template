@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import Field
+from pydantic import Field, PostgresDsn, RedisDsn, MongoDsn
 from shared.path import ENV_FILE_PATH, APP_ENVIRONMENT
 
 class ProjectSettings(BaseModel):
@@ -58,4 +58,11 @@ class Settings(BaseSettings):
         SERIALIZE=False,
         ENQUEUE=False
     )
+
+    # Database settings
+    # ----------------------------------------------------------------
+
+    POSTGRESQL_URL: PostgresDsn
+    MONGO_URL: MongoDsn
+    REDIS_URL: RedisDsn
 
