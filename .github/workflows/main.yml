@@ -11,7 +11,7 @@ permissions:
 
 # Re‐usar versiones y directorios en todos los jobs
 env:
-  PYTHON_VERSION: "3.13"
+  PYTHON_VERSION: "3.12"
   COVERAGE_REPORTS: coverage-reports
 
 ###############################################################################
