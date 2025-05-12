@@ -225,5 +225,9 @@ jobs:
           done
 
       - name: Publish new version
-        run: aws lambda publish-version \
-               --function-name ${{ secrets.AWS_LAMBDA_FUNCTION_NAME }}
+        env:
+          FUNCTION_NAME: ${{ secrets.AWS_LAMBDA_FUNCTION_NAME }}
+        run: |
+          set -euo pipefail
+          aws lambda publish-version \
+            --function-name "$FUNCTION_NAME"
