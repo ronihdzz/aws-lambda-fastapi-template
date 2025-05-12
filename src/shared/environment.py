@@ -7,7 +7,7 @@ class AppEnvironment(StrEnum):
     PRODUCTION = "production", "prod"
     TESTING = "testing", "test"
     TESTING_DOCKER = "testing_docker", "test.docker"
-
+    LOCAL_DOCKER = "local_docker", "local.docker"
     def __new__(cls, value: str, suffix: str) -> "AppEnvironment":
         obj = str.__new__(cls, value)
         obj._value_ = value

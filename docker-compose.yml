@@ -33,3 +33,17 @@ services:
       - db-postgres
       - db-mongodb
       - db-redis
+  
+  lambda-app:
+    build:
+      context: .
+      dockerfile: docker_images/deploy/Dockerfile.deploy
+    environment:
+      - ENVIRONMENT=local_docker
+      - POSTGRESQL_URL=postgresql://test:test@db-postgres:5432/test_db
+      - MONGO_URL=mongodb://db-mongodb:27017/test_db
+      - REDIS_URL=redis://db-redis:6379
+    env_file:
+      - ./.envs/.env.local.docker
+    ports:
+      - 9100:8080
