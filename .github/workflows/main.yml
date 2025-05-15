@@ -141,93 +141,62 @@ jobs:
     runs-on: ubuntu-latest
     needs: test
 
+    env:
+      IMAGE_NAME: my-fastapi-lambda
+      ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}         # ej. 284789984208.dkr.ecr.us-east-1.amazonaws.com
+      ECR_REPO_NAME: ${{ secrets.ECR_REPO_NAME }}       # ej. my-fastapi-lambda
+      BRANCH_ENV_MAP: '{"main": "prod", "development": "dev", "staging": "stg", "testing": "tst"}'
+
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
+      - name: 🛠️ Instalar jq
+        run: sudo apt-get update && sudo apt-get install -y jq
 
-      # ➊ Instalar Poetry y plugin de export
-      - name: Install Poetry and export plugin
-        run: |
-          curl -sSL https://install.python-poetry.org | python3 -
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-          poetry self add poetry-plugin-export
-
-      # ➋ Exportar las deps a requirements.txt
-      - name: Export dependencies
-        run: poetry export --without-hashes -f requirements.txt -o requirements.txt
-
-      # ➌ Instalar en un venv para luego empaquetar
-      - name: Install deps (pip)
-        run: |
-          python -m venv venv
-          source venv/bin/activate
-          pip install --upgrade pip
-          pip install -r requirements.txt
-
-      - name: Package Lambda zip
-        run: |
-          cd venv/lib/python${{ env.PYTHON_VERSION }}/site-packages
-          zip -r9 ../../../../api.zip .
-          cd ../../../../src
-          zip -g ../api.zip -r .
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: api-package
-          path: api.zip
-
-
-###############################################################################
-# 4.  DEPLOY – solo en rama main
-###############################################################################
-  deploy:
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/development'
-    runs-on: ubuntu-latest
-    needs: build                  # espera a que el build termine
-
-    steps:
-      - name: Configure AWS credentials
+      - name: 🔐 Configurar credenciales AWS
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region:            ${{ secrets.AWS_DEFAULT_REGION }}
 
-      - name: Download package
-        uses: actions/download-artifact@v4
-        with:
-          name: api-package
+      - name: 🔐 Login a ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Upload to S3
-        run: aws s3 cp api.zip s3://${{ secrets.AWS_S3_BUCKET }}/api.zip
-
-      - name: Update Lambda code
+      - name: 🧠 Mapear rama a entorno y generar tags
         run: |
-          aws lambda update-function-code \
-            --function-name ${{ secrets.AWS_LAMBDA_FUNCTION_NAME }} \
-            --s3-bucket      ${{ secrets.AWS_S3_BUCKET }} \
-            --s3-key         api.zip
+          echo "📦 Configurando entorno y versionado..."
 
-      - name: Wait for Lambda update
-        run: |
-          while true; do
-            STATUS=$(aws lambda get-function-configuration \
-              --function-name ${{ secrets.AWS_LAMBDA_FUNCTION_NAME }} \
-              --query "LastUpdateStatus" --output text)
-            echo "Lambda status: $STATUS"
-            [[ "$STATUS" == "Successful" ]] && break
-            sleep 5
-          done
+          BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+          echo "🔍 Rama detectada: $BRANCH_NAME"
+          echo "🧭 Mapeo de ramas a entornos: $BRANCH_ENV_MAP"
 
-      - name: Publish new version
-        env:
-          FUNCTION_NAME: ${{ secrets.AWS_LAMBDA_FUNCTION_NAME }}
+          ENVIRONMENT=$(echo "$BRANCH_ENV_MAP" | jq -r --arg branch "$BRANCH_NAME" '.[$branch]')
+          if [[ "$ENVIRONMENT" == "null" || -z "$ENVIRONMENT" ]]; then
+            echo "❌ Error: rama '$BRANCH_NAME' no está mapeada a un entorno válido."
+            exit 1
+          fi
+
+          VERSION=$(date -u +"%Y%m%dT%H%M%SZ")
+
+          echo "🏷️ ENVIRONMENT=$ENVIRONMENT"
+          echo "📅 VERSION=$VERSION"
+
+          echo "ENVIRONMENT=$ENVIRONMENT" >> $GITHUB_ENV
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "IMAGE_VERSION=$ECR_REGISTRY/$ECR_REPO_NAME:$ENVIRONMENT-$VERSION" >> $GITHUB_ENV
+          echo "IMAGE_LATEST=$ECR_REGISTRY/$ECR_REPO_NAME:$ENVIRONMENT-latest" >> $GITHUB_ENV
+
+      - name: 🏗️ Build de imagen Docker para Lambda
         run: |
-          set -euo pipefail
-          aws lambda publish-version \
-            --function-name "$FUNCTION_NAME"
+          docker build \
+            -f docker_images/deploy/Dockerfile.deploy \
+            -t $IMAGE_VERSION .
+
+          docker tag $IMAGE_VERSION $IMAGE_LATEST
+
+      - name: 🚀 Push de imágenes a ECR
+        run: |
+          docker push $IMAGE_VERSION
+          docker push $IMAGE_LATEST
