@@ -223,6 +223,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
 
+    env:
+      ARTIFACT_NAME: image-env-${{ github.ref_name }}
+
     steps:
       - name: 🔐 Configurar credenciales AWS
         uses: aws-actions/configure-aws-credentials@v2
@@ -234,9 +237,9 @@ jobs:
       - name: 📥 Descargar artifact con IMAGE_LATEST
         uses: actions/download-artifact@v4
         with:
-          name: image-env-${{ github.ref_name }}
-
-
+          name: ${{ env.ARTIFACT_NAME }}
+      
+      
       - name: 🧪 Cargar y validar variables de entorno del build
         run: |
           set -a
