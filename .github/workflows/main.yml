@@ -132,6 +132,7 @@ jobs:
           coverage-source: ${{ env.COVERAGE_REPORTS }}
           is-artifact: false
 
+
 ###############################################################################
 # 3.  BUILD 
 ###############################################################################
@@ -201,14 +202,17 @@ jobs:
           docker push $IMAGE_VERSION
           docker push $IMAGE_LATEST
 
-      - name: 📤 Guardar IMAGE_LATEST como artifact
-        run: echo "IMAGE_LATEST=$IMAGE_LATEST" > image.env
+      - name: 📤 Guardar variables como artifact
+        run: |
+          echo "IMAGE_LATEST=$IMAGE_LATEST" > image.env
+          echo "ENVIRONMENT=$ENVIRONMENT" >> image.env
 
       - name: 📦 Subir artifact con IMAGE_LATEST
         uses: actions/upload-artifact@v4
         with:
-          name: image-env
+          name: image-env-${{ github.ref_name }}
           path: image.env
+
 
 ##############################################################################
 # 4.  DEPLOY 
@@ -230,27 +234,51 @@ jobs:
       - name: 📥 Descargar artifact con IMAGE_LATEST
         uses: actions/download-artifact@v4
         with:
-          name: image-env
+          name: image-env-${{ github.ref_name }}
 
-      - name: 🧪 Cargar variable IMAGE_LATEST
+
+      - name: 🧪 Cargar y validar variables de entorno del build
         run: |
           set -a
           source image.env
           set +a
+
           echo "📦 Imagen a desplegar: $IMAGE_LATEST"
+          echo "🌎 Entorno detectado: $ENVIRONMENT"
+
+          # Validar que ENVIRONMENT no esté vacío
+          if [[ -z "$ENVIRONMENT" ]]; then
+            echo "❌ ENVIRONMENT no fue cargado correctamente."
+            exit 1
+          fi
+
+          # Validar que IMAGE_LATEST no esté vacío y sea una URI válida
+          if [[ -z "$IMAGE_LATEST" || "$IMAGE_LATEST" != *".dkr.ecr."* ]]; then
+            echo "❌ IMAGE_LATEST no es una URI válida de imagen ECR: $IMAGE_LATEST"
+            exit 1
+          fi
+
           echo "IMAGE_LATEST=$IMAGE_LATEST" >> $GITHUB_ENV
+          echo "ENVIRONMENT=$ENVIRONMENT" >> $GITHUB_ENV
+
+
+      - name: 🧩 Construir nombre completo de la Lambda
+        run: |
+          FULL_LAMBDA_NAME="${{ secrets.AWS_LAMBDA_BASE_NAME }}-${ENVIRONMENT}"
+          echo "🐑 Lambda completa: $FULL_LAMBDA_NAME"
+          echo "FULL_LAMBDA_NAME=$FULL_LAMBDA_NAME" >> $GITHUB_ENV
 
       - name: 🚀 Actualizar Lambda con nueva imagen
         run: |
           aws lambda update-function-code \
-            --function-name "${{ secrets.AWS_LAMBDA_FUNCTION_NAME }}" \
+            --function-name "$FULL_LAMBDA_NAME" \
             --image-uri "$IMAGE_LATEST"
 
       - name: ⏳ Esperar a que termine la actualización
         run: |
           while true; do
             STATUS=$(aws lambda get-function-configuration \
-              --function-name "${{ secrets.AWS_LAMBDA_FUNCTION_NAME }}" \
+              --function-name "$FULL_LAMBDA_NAME" \
               --query "LastUpdateStatus" --output text)
             echo "Lambda status: $STATUS"
             [[ "$STATUS" == "Successful" ]] && break
@@ -260,4 +288,4 @@ jobs:
       - name: 📦 Publicar nueva versión
         run: |
           aws lambda publish-version \
-            --function-name "${{ secrets.AWS_LAMBDA_FUNCTION_NAME }}"
+            --function-name "$FULL_LAMBDA_NAME"  
