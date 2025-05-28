@@ -44,11 +44,11 @@ def create_response_for_fast_api(
         else:
             first_element = data[0]
             if isinstance(first_element,BaseModel):
-                data = [element.model_dump() for element in data]
+                data = [element.model_dump(mode="json") for element in data]
                 
 
     elif isinstance(data, BaseModel):
-        data = data.model_dump_json()
+        data = data.model_dump_json(mode="json")
         data = json.loads(data)
 
     if not success:
