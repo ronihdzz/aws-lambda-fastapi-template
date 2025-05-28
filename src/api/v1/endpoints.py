@@ -1,65 +1,52 @@
-from fastapi import HTTPException
-from api.v1.schema import Book, BookCreate
+from api.v1.schema import BookCreateSchema
 from loguru import logger
-
-from fastapi import (
-    APIRouter,
+from shared.base_responses import create_response_for_fast_api, EnvelopeResponse
+from fastapi import APIRouter, Response
+from uuid import UUID
+from api.v1.services import (
+    BooksListService,
+    BookCreateService,
+    BookRetrieveService,
+    BookUpdateService,
+    BookDeleteService,
 )
 
-router = APIRouter(prefix="/books",tags=["Books"])
+router = APIRouter(prefix="/books", tags=["Books"])
 
 
-# Simulated database
-books_db: list[Book] = []
-counter_id = 0
-
-
-# Get all books
-@router.get("", response_model=list[Book])
-async def get_books() -> list[Book]:
+@router.get("", response_model=EnvelopeResponse)
+async def get_books() -> EnvelopeResponse:
     logger.info("Retrieving all books")
-    return books_db
+    books = BooksListService.list()
+    return create_response_for_fast_api(data=books)
 
-@router.post("", response_model=Book, status_code=201)
-async def create_book(book: BookCreate) -> Book:
-    global counter_id
-    counter_id += 1
-    new_book = Book(id=counter_id, **book.model_dump())
-    books_db.append(new_book)
-    logger.info(f"Created new book with ID: {counter_id}")
-    return new_book
 
-# Get book by ID
-@router.get("/{book_id}", response_model=Book)
-async def get_book(book_id: int) -> Book:
+@router.post("", response_model=EnvelopeResponse)
+async def create_book(book: BookCreateSchema) -> EnvelopeResponse:
+    logger.info("Creating new book")
+    new_book = BookCreateService.create(book)
+    logger.info(f"Book created with ID: {new_book.id}")
+    return create_response_for_fast_api(data=new_book, status_code_http=201)
+
+
+@router.get("/{book_id}", response_model=EnvelopeResponse)
+async def get_book(book_id: UUID) -> EnvelopeResponse:
     logger.info(f"Retrieving book with ID: {book_id}")
-    for book in books_db:
-        if book.id == book_id:
-            return book
-    logger.error(f"Book with ID {book_id} not found")
-    raise HTTPException(status_code=404, detail="Book not found")
+    book = BookRetrieveService.retrieve(book_id)
+    return create_response_for_fast_api(data=book)
 
-# Update a book
-@router.put("/{book_id}", response_model=Book)
-async def update_book(book_id: int, updated: BookCreate) -> Book:
-    logger.info(f"Attempting to update book with ID: {book_id}")
-    for i, book in enumerate(books_db):
-        if book.id == book_id:
-            updated_book = Book(id=book_id, **updated.model_dump())
-            books_db[i] = updated_book
-            logger.info(f"Successfully updated book with ID: {book_id}")
-            return updated_book
-    logger.error(f"Book with ID {book_id} not found for update")
-    raise HTTPException(status_code=404, detail="Book not found")
 
-# Delete a book
+@router.put("/{book_id}", response_model=EnvelopeResponse)
+async def update_book(book_id: UUID, updated: BookCreateSchema) -> EnvelopeResponse:
+    logger.info(f"Updating book with ID: {book_id}")
+    updated_book = BookUpdateService.update(book_id, updated)
+    logger.info(f"Successfully updated book with ID: {book_id}")
+    return create_response_for_fast_api(data=updated_book)
+
+
 @router.delete("/{book_id}", status_code=204)
-async def delete_book(book_id: int) -> None:
+async def delete_book(book_id: UUID) -> None:
     logger.info(f"Attempting to delete book with ID: {book_id}")
-    for i, book in enumerate(books_db):
-        if book.id == book_id:
-            books_db.pop(i)
-            logger.info(f"Successfully deleted book with ID: {book_id}")
-            return
-    logger.error(f"Book with ID {book_id} not found for deletion")
-    raise HTTPException(status_code=404, detail="Book not found")
+    BookDeleteService.delete(book_id)
+    logger.info(f"Successfully deleted book with ID: {book_id}")
+    return Response(status_code=204)

@@ -7,13 +7,20 @@ from api.routers import api_v1_router
 from api.endpoints import index_router
 from typing import Any
 from core.settings import settings
+from shared.middlewares import (
+    CatcherExceptions,
+    CatcherExceptionsPydantic
+)
+from fastapi.middleware import Middleware
 
 app = FastAPI(
     title=settings.PROJECT.NAME,
     version=settings.PROJECT.VERSION,
     description=settings.PROJECT.DESCRIPTION,
     root_path=settings.ROOT_PATH,
-    middleware=[]
+    middleware=[
+        Middleware(CatcherExceptions)
+    ]
 )
 
 
@@ -34,5 +41,5 @@ def custom_openapi() -> dict[str, Any]:
 app.openapi = custom_openapi # type: ignore
 app.include_router(api_v1_router)
 app.include_router(index_router)
-
+CatcherExceptionsPydantic(app)
 handler = Mangum(app)

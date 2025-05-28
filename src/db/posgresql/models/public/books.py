@@ -11,6 +11,3 @@ class Book(Base, BaseModel):
     author: str = Column(String, nullable=False)
     year: int = Column(Integer, nullable=False)
     type: BookType = Column(Enum(BookType), nullable=False)
-    
-
-    

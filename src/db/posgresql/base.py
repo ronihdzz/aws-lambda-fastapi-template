@@ -25,3 +25,9 @@ class BaseModel:
     @declared_attr
     def deleted_at(cls):
         return Column(DateTime, nullable=True)
+
+    def to_dict(self):
+        return {
+            column.name: getattr(self, column.name)
+            for column in self.__table__.columns
+        }

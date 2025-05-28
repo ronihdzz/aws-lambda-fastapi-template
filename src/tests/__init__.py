@@ -7,7 +7,8 @@ from db.posgresql.models.public import (  # import all models for create tables 
 from shared.environment import AppEnvironment
 from tests.create_databases import prepare_database
 
-if settings.ENVIRONMENT in [AppEnvironment.TESTING, AppEnvironment.TESTING_DOCKER]:
+logger.info(f"Check if ENVIRONMENT=testing: {settings.ENVIRONMENT} in {AppEnvironment.TESTING.value} or {AppEnvironment.TESTING_DOCKER.value}")
+if settings.ENVIRONMENT in [AppEnvironment.TESTING.value, AppEnvironment.TESTING_DOCKER.value]:
     logger.info("Preparing database for tests")
     prepare_database(
         schemas_to_create=["public"],
