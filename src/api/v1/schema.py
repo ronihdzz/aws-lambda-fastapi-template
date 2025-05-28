@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, field_serializer
 from db.posgresql.models.public import BookType
 from uuid import UUID
 
@@ -10,11 +10,11 @@ class BookSchema(BaseModel):
     year: int
     type: BookType
 
-    class Config:
-        allow_population_by_field_name = False
-        json_encoders = {
-            UUID: lambda v: str(v),
-        }
+    model_config = ConfigDict(validate_by_name=False)
+
+    @field_serializer('id')
+    def serialize_id(self, v: UUID, _info):
+        return str(v)
 
 # Create a new book
 class BookCreateSchema(BaseModel):

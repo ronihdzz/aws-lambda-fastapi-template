@@ -3,7 +3,7 @@ from abc import ABC
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict, field_serializer
 
 from shared.utils_dates import get_app_current_time
 
@@ -24,11 +24,12 @@ class BaseMongoDocument(BaseModel):
     updated_at: datetime = Field(default_factory=default_mongodb_created_at)
     deleted_at: datetime | None = Field(default=None)
 
-    class Config:
-        allow_population_by_field_name = False
-        json_encoders = {
-            UUID: lambda v: str(v),
-        }
+
+    model_config = ConfigDict(validate_by_name=False)
+
+    @field_serializer('id')
+    def serialize_id(self, v: UUID, _info):
+        return str(v)
 
 
 class MongoAbstractRepository(ABC):
