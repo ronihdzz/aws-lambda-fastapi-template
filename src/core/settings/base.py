@@ -32,6 +32,7 @@ class Settings(BaseSettings):
         default=APP_ENVIRONMENT,
         validate_default=True
     )
+    ROOT_PATH: str | None = ""
 
     SENTRY_DSN: str | None = None
 
