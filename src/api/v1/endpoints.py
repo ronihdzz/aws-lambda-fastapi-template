@@ -63,10 +63,3 @@ async def delete_book(book_id: int) -> None:
             return
     logger.error(f"Book with ID {book_id} not found for deletion")
     raise HTTPException(status_code=404, detail="Book not found")
-
-
-
-@router.get("/ruy")
-async def get_ruy():
-    logger.info("Received request to get Ruy")
-    return {"name": "ruy"}
