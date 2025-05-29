@@ -12,12 +12,11 @@
             "args": [
                 "main:app",
                 "--reload",
-                "--port=9999"
+                "--port=9000"
             ],
             "jinja": true,
             "cwd": "${workspaceFolder}/src",
             "env": {
-                "ENVIRONMENT": "development"
             },
             "python": "${workspaceFolder}/env/bin/python"
         }
