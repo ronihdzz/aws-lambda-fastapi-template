@@ -1,5 +1,5 @@
-from api.v1.repositories import BookRepository
-from api.v1.schema import BookSchema, BookCreateSchema
+from api.v1.books.repositories import BookRepository
+from api.v1.books.schema import BookSchema, BookCreateSchema
 from core.exceptions import BookException
 from uuid import UUID
 

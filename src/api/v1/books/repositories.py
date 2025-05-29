@@ -1,6 +1,6 @@
 from db.posgresql import get_db_context
 from db.posgresql.models.public import Book
-from api.v1.schema import BookCreateSchema
+from api.v1.books.schema import BookCreateSchema
 from sqlalchemy import select
 
 class BookRepository:

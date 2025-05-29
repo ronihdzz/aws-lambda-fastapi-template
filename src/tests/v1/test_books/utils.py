@@ -6,7 +6,7 @@ from sqlalchemy import text
 from main import app                                     
 from db.posgresql import get_db_context                  
 from db.posgresql.models.public import BookType
-from api.v1.schema import BookCreateSchema
+from api.v1.books.schema import BookCreateSchema
 
 class DBMixin:
     """Métodos auxiliares para limpiar la tabla `book` entre tests."""

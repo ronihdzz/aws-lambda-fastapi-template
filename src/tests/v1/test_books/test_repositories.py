@@ -1,5 +1,5 @@
 import unittest
-from api.v1.repositories import BookRepository
+from api.v1.books.repositories import BookRepository
 from .utils import DBMixin
 
 # ─────────────────────────  TESTS REPOSITORIO  ────────────────────────── #

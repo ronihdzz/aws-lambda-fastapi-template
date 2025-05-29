@@ -1,9 +1,9 @@
-from api.v1.schema import BookCreateSchema
+from api.v1.books.schema import BookCreateSchema
 from loguru import logger
 from shared.base_responses import create_response_for_fast_api, EnvelopeResponse
 from fastapi import APIRouter, Response
 from uuid import UUID
-from api.v1.services import (
+from api.v1.books.services import (
     BooksListService,
     BookCreateService,
     BookRetrieveService,
