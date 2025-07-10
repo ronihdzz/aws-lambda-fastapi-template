@@ -33,11 +33,23 @@ services:
       - db-postgres
       - db-mongodb
       - db-redis
-  
+
+  app:
+    build:
+      context: .
+      dockerfile: docker_images/app/Dockerfile.app
+    environment:
+      - ENVIRONMENT=local
+    env_file:
+      - ./.envs/.env.local
+    ports:
+      - 9000:9000
+
+
   lambda-app:
     build:
       context: .
-      dockerfile: docker_images/deploy/Dockerfile.deploy
+      dockerfile: docker_images/lambda/Dockerfile.lambda
     environment:
       - ENVIRONMENT=local_docker
       - POSTGRESQL_URL=postgresql://test:test@db-postgres:5432/test_db
@@ -47,3 +59,4 @@ services:
       - ./.envs/.env.local.docker
     ports:
       - 9100:8080
+  

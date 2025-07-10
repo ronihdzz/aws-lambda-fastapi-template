@@ -343,7 +343,30 @@ curl -X POST "http://localhost:9100/2015-03-31/functions/function/invocations" \
 ```
 
 
-## 🎯 **Ventajas del Template**
+## 🎯 **Ventajas del Template**# --- Base runtime de AWS Lambda ---
+FROM public.ecr.aws/lambda/python:3.12
+
+# 1️⃣  Ubicamos la raíz de la app aquí
+WORKDIR /app
+
+# 2️⃣  Instalamos Poetry (sin virtualenv para dejar deps en la capa global)
+RUN curl -sSL https://install.python-poetry.org | python3 - && \
+    ln -s /root/.local/bin/poetry /usr/local/bin/poetry
+
+# 3️⃣  Resolución de dependencias
+COPY pyproject.toml poetry.lock* /tmp/
+RUN cd /tmp && \
+    poetry config virtualenvs.create false && \
+    poetry install --no-interaction --no-root --without dev
+
+# 4️⃣  Copiamos el código.  ▸ /app/api  /app/core  /app/shared …
+COPY src/ .
+
+# 5️⃣  Aseguramos que /app esté en el path de Python (opcional, ya lo está)
+ENV PYTHONPATH="/app"
+
+# 6️⃣  Lambda buscará api/main.py y llamará a handler()
+CMD ["main.handler"]
 
 ### **Para Desarrollo**
 - **Serverless Ready**: Optimizado para AWS Lambda con Mangum

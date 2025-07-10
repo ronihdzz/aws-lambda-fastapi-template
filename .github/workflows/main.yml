@@ -192,7 +192,7 @@ jobs:
       - name: 🏗️ Build de imagen Docker para Lambda
         run: |
           docker build \
-            -f docker_images/deploy/Dockerfile.deploy \
+            -f docker_images/lambda/Dockerfile.lambda \
             -t $IMAGE_VERSION .
 
           docker tag $IMAGE_VERSION $IMAGE_LATEST
